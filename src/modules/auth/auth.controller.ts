@@ -16,3 +16,15 @@ export async function loginController(req: Request, res: Response, next: NextFun
     next(error);
   }
 }
+
+export function meController(req: Request, res: Response): void {
+  apiResponse({
+    res,
+    success: true,
+    message: 'Authenticated user',
+    data: {
+      userId: req.user!.userId,
+      role: req.user!.role,
+    },
+  });
+}
