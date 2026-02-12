@@ -34,7 +34,11 @@ function handlePrismaError(error: unknown): never {
   throw error;
 }
 
-export async function createResident(input: CreateResidentInput, actorId: string) {
+async function createResidentWithEvent(
+  input: CreateResidentInput,
+  actorId: string,
+  eventType: 'birth' | 'move_in'
+) {
   const data = createResidentSchema.parse(input);
 
   const family = await familyRepo.findById(data.familyId);
@@ -60,8 +64,8 @@ export async function createResident(input: CreateResidentInput, actorId: string
           education: data.education,
           occupation: data.occupation,
           maritalStatus: data.maritalStatus,
-          lifeStatus: data.lifeStatus ?? 'alive',
-          domicileStatus: data.domicileStatus,
+          lifeStatus: 'alive',
+          domicileStatus: 'permanent',
           phone: data.phone,
           family: { connect: { id: data.familyId } },
         },
@@ -70,7 +74,7 @@ export async function createResident(input: CreateResidentInput, actorId: string
 
       await tx.populationEvent.create({
         data: {
-          eventType: 'birth',
+          eventType,
           residentId: created.id,
           createdById: actorId,
           eventDate: new Date(),
@@ -93,6 +97,14 @@ export async function createResident(input: CreateResidentInput, actorId: string
   } catch (error) {
     handlePrismaError(error);
   }
+}
+
+export async function createBirthResident(input: CreateResidentInput, actorId: string) {
+  return createResidentWithEvent(input, actorId, 'birth');
+}
+
+export async function createMoveInResident(input: CreateResidentInput, actorId: string) {
+  return createResidentWithEvent(input, actorId, 'move_in');
 }
 
 export async function getResidentById(id: string) {

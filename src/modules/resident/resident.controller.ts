@@ -2,14 +2,30 @@ import { Request, Response, NextFunction } from 'express';
 import * as residentService from './resident.service';
 import { apiResponse } from '../../utils/apiResponse';
 
-export async function createResidentController(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function createBirthResidentController(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const resident = await residentService.createResident(req.body, req.user!.userId);
+    const resident = await residentService.createBirthResident(req.body, req.user!.userId);
 
     apiResponse({
       res,
       success: true,
-      message: 'Resident created successfully',
+      message: 'Resident birth recorded successfully',
+      data: resident,
+      statusCode: 201,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function createMoveInResidentController(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const resident = await residentService.createMoveInResident(req.body, req.user!.userId);
+
+    apiResponse({
+      res,
+      success: true,
+      message: 'Resident move-in recorded successfully',
       data: resident,
       statusCode: 201,
     });

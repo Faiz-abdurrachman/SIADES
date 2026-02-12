@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { authenticate } from '../../middleware/authenticate';
 import { authorize } from '../../middleware/authorize';
 import {
-  createResidentController,
+  createBirthResidentController,
+  createMoveInResidentController,
   getResidentByIdController,
   listResidentsController,
   updateResidentController,
@@ -15,7 +16,8 @@ const residentRouter = Router();
 
 residentRouter.use(authenticate);
 
-residentRouter.post('/', authorize(['admin', 'operator']), createResidentController);
+residentRouter.post('/birth', authorize(['admin', 'operator']), createBirthResidentController);
+residentRouter.post('/move-in', authorize(['admin', 'operator']), createMoveInResidentController);
 residentRouter.get('/', authorize(['admin', 'operator', 'kepala_desa']), listResidentsController);
 residentRouter.get('/:id', authorize(['admin', 'operator', 'kepala_desa']), getResidentByIdController);
 residentRouter.put('/:id', authorize(['admin', 'operator']), updateResidentController);
