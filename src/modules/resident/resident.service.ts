@@ -143,6 +143,13 @@ export async function updateResident(id: string, input: UpdateResidentInput, act
     }
   }
 
+  if (data.familyId) {
+    const family = await familyRepo.findById(data.familyId);
+    if (!family) {
+      throw new NotFoundError('Family not found');
+    }
+  }
+
   try {
     const { familyId, ...rest } = data;
 
@@ -176,6 +183,10 @@ export async function patchLifeStatus(id: string, input: PatchLifeStatusInput, a
   validateUUID(id);
 
   const { lifeStatus } = patchLifeStatusSchema.parse(input);
+
+  if (lifeStatus !== 'deceased') {
+    throw new ConflictError('Invalid life status transition');
+  }
 
   const existing = await residentRepo.findById(id);
   if (!existing) {
@@ -217,6 +228,10 @@ export async function patchDomicileStatus(id: string, input: PatchDomicileStatus
   validateUUID(id);
 
   const { domicileStatus } = patchDomicileStatusSchema.parse(input);
+
+  if (domicileStatus !== 'moved') {
+    throw new ConflictError('Invalid domicile status transition');
+  }
 
   const existing = await residentRepo.findById(id);
   if (!existing) {
