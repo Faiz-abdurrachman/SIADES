@@ -1,18 +1,23 @@
 # 09 — Future Module Roadmap
 
-## Phase 1 — Core Population System (IN PROGRESS)
+## Phase 1 — Core Population System (COMPLETE)
 
 ### Completed
 - [x] Project bootstrap (TypeScript, Express, Prisma)
 - [x] Authentication module (login, JWT, /me)
 - [x] Authorization middleware (role-based)
-- [x] Family CRUD module
+- [x] Family CRUD module (with soft delete + audit)
 - [x] Seed data (roles + admin user)
+- [x] Resident module (birth/move-in creation, status transitions, soft delete + audit)
+- [x] Population event module (read-only, events created via resident transactions)
+- [x] Statistics module (yearly/monthly aggregation by event type)
+- [x] Integration test suite (6 test files)
+- [x] CI/CD pipeline (GitHub Actions: typecheck, test, build)
+- [x] Docker deployment (multi-stage Dockerfile + docker-compose)
 
-### Remaining
-- [ ] Resident CRUD module
-- [ ] Population event module
+### Remaining in Phase 1
 - [ ] User registration endpoint (admin only)
+- [ ] User management CRUD (admin only)
 
 ## Phase 2 — Letter Management
 
@@ -53,7 +58,7 @@
 ## Phase 4 — Analytics & Reporting (Future)
 
 ### Planned Features
-- Population statistics dashboard
+- Population statistics dashboard (basic version done in Phase 1)
 - Demographic reports
 - Event history reports
 - Letter processing metrics

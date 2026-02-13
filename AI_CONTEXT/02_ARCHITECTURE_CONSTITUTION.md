@@ -38,6 +38,7 @@ Route → Controller → Service → Repository → Prisma → PostgreSQL
 - Prisma queries only
 - No business logic
 - Accepts transaction client where needed (e.g., softDeleteTx)
+- Uses `Client = Prisma.TransactionClient | typeof prisma` pattern for tx support
 
 ### Middleware Layer
 - Authentication (JWT verification)
@@ -63,10 +64,23 @@ src/
 │   │   ├── family.controller.ts
 │   │   ├── family.service.ts
 │   │   └── family.repository.ts
-│   ├── resident/                   # Not yet implemented
-│   └── event/                      # Not yet implemented
+│   ├── resident/
+│   │   ├── resident.routes.ts
+│   │   ├── resident.controller.ts
+│   │   ├── resident.service.ts
+│   │   └── resident.repository.ts
+│   ├── event/
+│   │   ├── event.routes.ts
+│   │   ├── event.controller.ts
+│   │   ├── event.service.ts
+│   │   └── event.repository.ts
+│   └── statistics/
+│       ├── statistics.routes.ts
+│       ├── statistics.controller.ts
+│       ├── statistics.service.ts
+│       └── statistics.repository.ts
 ├── middleware/
-│   ├── authenticate.ts             # JWT checkAuth
+│   ├── authenticate.ts             # JWT verification, sets req.user
 │   ├── authorize.ts                # checkRole factory
 │   └── errorHandler.ts             # Centralized error handler
 ├── utils/
@@ -74,7 +88,10 @@ src/
 │   └── appError.ts                 # Custom error classes
 └── validators/
     ├── auth.validator.ts           # Login Zod schema
-    └── family.validator.ts         # Family CRUD Zod schemas
+    ├── family.validator.ts         # Family CRUD Zod schemas
+    ├── resident.validator.ts       # Resident CRUD + status patch Zod schemas
+    ├── event.validator.ts          # Event query Zod schemas
+    └── statistics.validator.ts     # Statistics query Zod schema
 ```
 
 ## API Response Standard
@@ -95,7 +112,7 @@ All endpoints must return:
 | AuthenticationError | 401 | Missing/invalid token, wrong credentials |
 | AuthorizationError | 403 | Insufficient role permissions |
 | NotFoundError | 404 | Resource not found |
-| ConflictError | 409 | Duplicate unique field, delete with active children |
+| ConflictError | 409 | Duplicate unique field, invalid state transitions |
 
 ZodError is caught separately and returns 400 with field-level details.
 
@@ -105,3 +122,6 @@ ZodError is caught separately and returns 400 with field-level details.
 - Parallel queries with Promise.all for independent operations
 - Transaction client passed to repository for transactional operations
 - Router-level authenticate with per-route authorize
+- Domain-correct creation: separate endpoints for birth vs move-in (not generic create)
+- Status transitions: one-way only (alive→deceased, permanent→moved)
+- `Client = Prisma.TransactionClient | typeof prisma` type alias in repository

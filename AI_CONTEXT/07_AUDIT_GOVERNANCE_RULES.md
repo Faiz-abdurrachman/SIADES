@@ -35,6 +35,18 @@ Every critical action must create an AuditLog entry:
 | userId | req.user.userId (from JWT) |
 | ipAddress | req.ip (not yet implemented) |
 
+### Implemented Audit Points
+| Module | Action | tableName | Transactional |
+|--------|--------|-----------|---------------|
+| Family | CREATE | Family | No (single write) |
+| Family | UPDATE | Family | No (single write) |
+| Family | DELETE | Family | Yes (softDelete + audit) |
+| Resident | CREATE | Resident | Yes (resident + event + audit) |
+| Resident | UPDATE | Resident | Yes (update + audit) |
+| Resident | DELETE | Resident | Yes (softDelete + audit) |
+| Resident | UPDATE (lifeStatus) | Resident | Yes (status + event + audit) |
+| Resident | UPDATE (domicileStatus) | Resident | Yes (status + event + audit) |
+
 ### Rules
 - Audit logs are IMMUTABLE — no update or delete operations
 - Audit logs are created in the service layer

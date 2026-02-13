@@ -4,6 +4,9 @@ import { errorHandler } from './middleware/errorHandler';
 import prisma from './config/prisma';
 import authRouter from './modules/auth/auth.routes';
 import familyRouter from './modules/family/family.routes';
+import residentRouter from './modules/resident/resident.routes';
+import eventRouter from './modules/event/event.routes';
+import statisticsRouter from './modules/statistics/statistics.routes';
 
 const app = express();
 
@@ -26,6 +29,9 @@ app.get('/api/health', async (_req, res, next) => {
 // Routes
 app.use('/api/auth', authRouter);
 app.use('/api/families', familyRouter);
+app.use('/api/residents', residentRouter);
+app.use('/api/events', eventRouter);
+app.use('/api/statistics', statisticsRouter);
 
 // Error handler (must be last)
 app.use(errorHandler);

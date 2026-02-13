@@ -6,9 +6,9 @@ Rules for any AI assistant working on this codebase.
 ## Before Writing Code
 
 1. Read and confirm understanding of:
-   - PROJECT_CONTEXT.md (or 01_PROJECT_IDENTITY.md)
-   - GOVERNANCE.md (or 02_ARCHITECTURE_CONSTITUTION.md)
-   - prisma/schema.prisma (or 03_DATABASE_SCHEMA_FULL.md)
+   - 01_PROJECT_IDENTITY.md
+   - 02_ARCHITECTURE_CONSTITUTION.md
+   - 03_DATABASE_SCHEMA_FULL.md
    - 04_CURRENT_IMPLEMENTATION_STATE.md
 
 2. Confirm understanding of:
@@ -55,6 +55,14 @@ Rules for any AI assistant working on this codebase.
 - Validate UUID format before database calls
 - Validate in service layer, not controller
 - Pagination: default 20, max 100
+- Use `.strict()` on all Zod schemas
+
+### Established Patterns to Follow
+- Repository: `Client = Prisma.TransactionClient | typeof prisma` pattern for optional tx
+- Service: `validateUUID()` helper + `handlePrismaError()` for P2002
+- Service: pre-check uniqueness + P2002 catch as safety net
+- Creation: domain-specific (birth/move-in), not generic create
+- Status transitions: one-way only, with event + audit in transaction
 
 ## When Switching AI Sessions
 

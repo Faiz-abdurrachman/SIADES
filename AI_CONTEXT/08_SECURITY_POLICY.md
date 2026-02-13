@@ -40,17 +40,19 @@ authenticate → authorize(['role1', 'role2']) → controller
 | Action | admin | operator | kepala_desa |
 |--------|-------|----------|-------------|
 | Login | yes | yes | yes |
-| View own profile | yes | yes | yes |
+| View own profile (GET /me) | yes | yes | yes |
 | Create family | yes | yes | no |
 | Read families | yes | yes | yes |
 | Update family | yes | yes | no |
 | Delete family | yes | no | no |
-| Create resident | yes | yes | no |
+| Create resident (birth/move-in) | yes | yes | no |
 | Read residents | yes | yes | yes |
 | Update resident | yes | yes | no |
+| Patch life status | yes | yes | no |
+| Patch domicile status | yes | yes | no |
 | Delete resident | yes | no | no |
-| Record events | yes | yes | no |
 | Read events | yes | yes | yes |
+| View statistics | yes | no | yes |
 
 ### Rules
 - No inline role checking in controllers or services
