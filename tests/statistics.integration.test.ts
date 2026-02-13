@@ -60,6 +60,7 @@ describe('Statistics Integration', () => {
         familyId,
       });
     expect(birth1.status).toBe(201);
+    const resident1Id = birth1.body.data.id;
 
     // 2. Create birth resident (February 2025)
     const birth2 = await request(app)
@@ -79,9 +80,9 @@ describe('Statistics Integration', () => {
         familyId,
       });
     expect(birth2.status).toBe(201);
+    const resident2Id = birth2.body.data.id;
 
     // 3. Patch February resident life-status to deceased
-    const resident2Id = birth2.body.data.id;
     const deathRes = await request(app)
       .patch(`/api/residents/${resident2Id}/life-status`)
       .set('Authorization', `Bearer ${token}`)
@@ -106,47 +107,38 @@ describe('Statistics Integration', () => {
         familyId,
       });
     expect(moveIn.status).toBe(201);
+    const resident3Id = moveIn.body.data.id;
 
     // 5. Patch March resident domicile-status to moved
-    const resident3Id = moveIn.body.data.id;
     const moveOutRes = await request(app)
       .patch(`/api/residents/${resident3Id}/domicile-status`)
       .set('Authorization', `Bearer ${token}`)
       .send({ domicileStatus: 'moved' });
     expect(moveOutRes.status).toBe(200);
 
-    // 6. Adjust event dates to 2025 months for statistics test
-    const events = await prisma.populationEvent.findMany({
-      orderBy: { createdAt: 'asc' },
-    });
-
-    // birth event for resident 1 → January 2025
-    await prisma.populationEvent.update({
-      where: { id: events[0].id },
+    // 6. Adjust event dates to 2025 months using deterministic updateMany
+    await prisma.populationEvent.updateMany({
+      where: { residentId: resident1Id, eventType: 'birth' },
       data: { eventDate: new Date(2025, 0, 15) },
     });
 
-    // birth event for resident 2 → February 2025
-    await prisma.populationEvent.update({
-      where: { id: events[1].id },
+    await prisma.populationEvent.updateMany({
+      where: { residentId: resident2Id, eventType: 'birth' },
       data: { eventDate: new Date(2025, 1, 10) },
     });
 
-    // death event for resident 2 → February 2025
-    await prisma.populationEvent.update({
-      where: { id: events[2].id },
+    await prisma.populationEvent.updateMany({
+      where: { residentId: resident2Id, eventType: 'death' },
       data: { eventDate: new Date(2025, 1, 20) },
     });
 
-    // move_in event for resident 3 → March 2025
-    await prisma.populationEvent.update({
-      where: { id: events[3].id },
+    await prisma.populationEvent.updateMany({
+      where: { residentId: resident3Id, eventType: 'move_in' },
       data: { eventDate: new Date(2025, 2, 5) },
     });
 
-    // move_out event for resident 3 → March 2025
-    await prisma.populationEvent.update({
-      where: { id: events[4].id },
+    await prisma.populationEvent.updateMany({
+      where: { residentId: resident3Id, eventType: 'move_out' },
       data: { eventDate: new Date(2025, 2, 25) },
     });
 
