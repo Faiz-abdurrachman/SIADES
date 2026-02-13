@@ -7,7 +7,16 @@ const config: Config = {
   testMatch: ['**/tests/**/*.test.ts'],
   moduleFileExtensions: ['ts', 'js'],
   clearMocks: true,
-  collectCoverage: false,
+  collectCoverage: true,
+  coverageDirectory: 'coverage',
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 85,
+      lines: 90,
+      statements: 90,
+    },
+  },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
 };
 
