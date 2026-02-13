@@ -3,7 +3,19 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(npx prisma generate:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npx jest:*)",
+      "Bash(psql:*)",
+      "Bash(PGPASSWORD=root createdb:*)",
+      "Bash(DATABASE_URL=\"postgresql://siades_user:root@localhost:5432/siades_test\" npx prisma db push:*)",
+      "Bash(DATABASE_URL=\"postgresql://siades_user:root@localhost:5432/siades_test\" npx jest:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(DATABASE_URL=\"postgresql://siades_user:root@localhost:5432/siades_test\" NODE_ENV=test npx jest:*)",
+      "Bash(PGPASSWORD=root psql:*)",
+      "Bash(git status:*)",
+      "Bash(git reset:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
