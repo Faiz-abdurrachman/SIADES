@@ -1,10 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import { AppError } from '../utils/appError';
+import logger from '../config/logger';
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 export function errorHandler(
   err: Error,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ): void {
@@ -31,12 +34,16 @@ export function errorHandler(
     return;
   }
 
-  console.error('Unhandled error:', err);
+  logger.error({
+    requestId: req.id,
+    err,
+    msg: 'Unhandled error',
+  });
 
   res.status(500).json({
     success: false,
     message: 'Internal server error',
     data: null,
-    error: null,
+    error: isProduction ? null : { name: err.name, message: err.message, stack: err.stack },
   });
 }
