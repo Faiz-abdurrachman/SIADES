@@ -15,7 +15,7 @@ import {
   CreateLetterRequestInput,
   RejectLetterRequestInput,
 } from '../../validators/letter.validator';
-import { ValidationError, NotFoundError } from '../../utils/appError';
+import { ValidationError, NotFoundError, ConflictError } from '../../utils/appError';
 
 const uuidSchema = z.string().uuid('Invalid UUID format');
 
@@ -179,13 +179,26 @@ export async function verifyLetterRequest(id: string, operatorUserId: string) {
   validateUUID(id);
 
   await prisma.$transaction(async (tx) => {
+    const current = await tx.letterRequest.findFirst({
+      where: { id },
+      select: { status: true, version: true },
+    });
+
+    if (!current) {
+      throw new NotFoundError('Letter request not found');
+    }
+
+    if (current.status !== 'pending') {
+      throw new ValidationError('Invalid status transition');
+    }
+
     const result = await tx.letterRequest.updateMany({
-      where: { id, status: 'pending' },
-      data: { status: 'verified' },
+      where: { id, status: 'pending', version: current.version },
+      data: { status: 'verified', version: { increment: 1 } },
     });
 
     if (result.count === 0) {
-      throw new ValidationError('Invalid status transition');
+      throw new ConflictError('Concurrent modification detected');
     }
 
     await tx.auditLog.create({
@@ -205,17 +218,31 @@ export async function approveLetterRequest(id: string, kepalaDesaUserId: string)
   validateUUID(id);
 
   await prisma.$transaction(async (tx) => {
+    const current = await tx.letterRequest.findFirst({
+      where: { id },
+      select: { status: true, version: true },
+    });
+
+    if (!current) {
+      throw new NotFoundError('Letter request not found');
+    }
+
+    if (current.status !== 'verified') {
+      throw new ValidationError('Invalid status transition');
+    }
+
     const result = await tx.letterRequest.updateMany({
-      where: { id, status: 'verified' },
+      where: { id, status: 'verified', version: current.version },
       data: {
         status: 'approved',
         approvedAt: new Date(),
         kepalaDesaId: kepalaDesaUserId,
+        version: { increment: 1 },
       },
     });
 
     if (result.count === 0) {
-      throw new ValidationError('Invalid status transition');
+      throw new ConflictError('Concurrent modification detected');
     }
 
     const signatureCode = randomUUID();
@@ -248,6 +275,19 @@ export async function rejectLetterRequest(id: string, input: RejectLetterRequest
   const data = rejectLetterRequestSchema.parse(input);
 
   await prisma.$transaction(async (tx) => {
+    const current = await tx.letterRequest.findFirst({
+      where: { id },
+      select: { status: true, version: true },
+    });
+
+    if (!current) {
+      throw new NotFoundError('Letter request not found');
+    }
+
+    if (current.status !== 'pending' && current.status !== 'verified') {
+      throw new ValidationError('Invalid status transition');
+    }
+
     const result = await tx.letterRequest.updateMany({
       where: {
         id,
@@ -255,16 +295,18 @@ export async function rejectLetterRequest(id: string, input: RejectLetterRequest
           { status: 'pending' },
           { status: 'verified' },
         ],
+        version: current.version,
       },
       data: {
         status: 'rejected',
         rejectionReason: data.reason,
         kepalaDesaId: actorUserId,
+        version: { increment: 1 },
       },
     });
 
     if (result.count === 0) {
-      throw new ValidationError('Invalid status transition');
+      throw new ConflictError('Concurrent modification detected');
     }
 
     await tx.auditLog.create({

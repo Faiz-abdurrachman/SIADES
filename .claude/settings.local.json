@@ -15,7 +15,8 @@
       "Bash(git status:*)",
       "Bash(git reset:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npx prisma migrate dev:*)"
     ]
   }
 }

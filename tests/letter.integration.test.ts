@@ -414,9 +414,13 @@ describe('Letter Module Integration', () => {
     });
 
     describe('Verify Letter Request', () => {
-      it('should transition pending → verified with audit log', async () => {
+      it('should transition pending → verified with audit log and increment version', async () => {
         const letterType = await createLetterType();
         const letterReq = await createLetterRequest(letterType.id);
+
+        // version starts at 1
+        const before = await prisma.letterRequest.findUnique({ where: { id: letterReq.id } });
+        expect(before!.version).toBe(1);
 
         const res = await request(app)
           .patch(`/api/letters/requests/${letterReq.id}/verify`)
@@ -429,6 +433,7 @@ describe('Letter Module Integration', () => {
         // Verify DB
         const dbRecord = await prisma.letterRequest.findUnique({ where: { id: letterReq.id } });
         expect(dbRecord!.status).toBe('verified');
+        expect(dbRecord!.version).toBe(2);
 
         // Verify audit log
         const audit = await prisma.auditLog.findFirst({
@@ -444,10 +449,14 @@ describe('Letter Module Integration', () => {
     });
 
     describe('Approve Letter Request', () => {
-      it('should transition verified → approved with audit log', async () => {
+      it('should transition verified → approved with audit log and increment version', async () => {
         const letterType = await createLetterType();
         const letterReq = await createLetterRequest(letterType.id);
         await verifyRequest(letterReq.id);
+
+        // version is 2 after verify
+        const before = await prisma.letterRequest.findUnique({ where: { id: letterReq.id } });
+        expect(before!.version).toBe(2);
 
         const res = await request(app)
           .patch(`/api/letters/requests/${letterReq.id}/approve`)
@@ -462,6 +471,7 @@ describe('Letter Module Integration', () => {
         expect(dbRecord!.status).toBe('approved');
         expect(dbRecord!.approvedAt).not.toBeNull();
         expect(dbRecord!.kepalaDesaId).toBe(kepalaDesaUserId);
+        expect(dbRecord!.version).toBe(3);
 
         // Verify audit log
         const audit = await prisma.auditLog.findFirst({
@@ -477,9 +487,12 @@ describe('Letter Module Integration', () => {
     });
 
     describe('Reject Letter Request', () => {
-      it('should reject from pending with reason', async () => {
+      it('should reject from pending with reason and increment version', async () => {
         const letterType = await createLetterType();
         const letterReq = await createLetterRequest(letterType.id);
+
+        const before = await prisma.letterRequest.findUnique({ where: { id: letterReq.id } });
+        expect(before!.version).toBe(1);
 
         const res = await request(app)
           .patch(`/api/letters/requests/${letterReq.id}/reject`)
@@ -494,6 +507,7 @@ describe('Letter Module Integration', () => {
         const dbRecord = await prisma.letterRequest.findUnique({ where: { id: letterReq.id } });
         expect(dbRecord!.status).toBe('rejected');
         expect(dbRecord!.rejectionReason).toBe('Data penduduk tidak valid');
+        expect(dbRecord!.version).toBe(2);
       });
 
       it('should reject from verified with reason', async () => {

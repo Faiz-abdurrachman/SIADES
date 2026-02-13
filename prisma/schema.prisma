@@ -185,6 +185,7 @@ model LetterRequest {
   rejectionReason String?
   documentPath   String?
   approvedAt     DateTime?
+  version        Int           @default(1)
 
   residentId     String
   resident       Resident      @relation(fields: [residentId], references: [id])
