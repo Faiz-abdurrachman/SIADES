@@ -1,0 +1,271 @@
+Schema is locked unless explicitly modified.
+All IDs are UUID.
+No integer PK allowed.
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////////
+// ENUMS
+//////////////////////
+
+enum Gender {
+  male
+  female
+}
+
+enum MaritalStatus {
+  single
+  married
+  divorced
+  widowed
+}
+
+enum LifeStatus {
+  alive
+  deceased
+}
+
+enum DomicileStatus {
+  permanent
+  moved
+}
+
+enum LetterStatus {
+  pending
+  verified
+  approved
+  rejected
+}
+
+enum EventType {
+  birth
+  death
+  move_in
+  move_out
+  data_update
+}
+
+//////////////////////
+// ROLES
+//////////////////////
+
+model Role {
+  id        String  @id @default(uuid())
+  name      String  @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//////////////////////
+// USERS
+//////////////////////
+
+model User {
+  id                String            @id @default(uuid())
+  name              String
+  email             String            @unique
+  password          String
+  roleId            String
+  role              Role              @relation(fields: [roleId], references: [id])
+  isActive          Boolean           @default(true)
+  deletedAt         DateTime?
+  auditLogs         AuditLog[]
+  documents         Document[]
+  populationEvents  PopulationEvent[]
+  operatorLetters   LetterRequest[]   @relation("OperatorLetters")
+  kepalaDesaLetters LetterRequest[]   @relation("KepalaDesaLetters")
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+//////////////////////
+// FAMILIES
+//////////////////////
+
+model Family {
+  id        String     @id @default(uuid())
+  noKK      String     @unique
+  alamat    String
+  rt        String
+  rw        String
+  dusun     String
+  isActive  Boolean    @default(true)
+  deletedAt DateTime?
+  residents Resident[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+//////////////////////
+// RESIDENTS
+//////////////////////
+
+model Resident {
+  id             String           @id @default(uuid())
+  nik            String           @unique
+  fullName       String
+  birthPlace     String
+  birthDate      DateTime
+  gender         Gender
+  religion       String
+  education      String
+  occupation     String
+  maritalStatus  MaritalStatus
+  lifeStatus     LifeStatus
+  domicileStatus DomicileStatus
+  phone          String?
+  isActive       Boolean          @default(true)
+  deletedAt      DateTime?
+  
+  familyId       String
+  family         Family           @relation(fields: [familyId], references: [id])
+
+  events         PopulationEvent[]
+  letters        LetterRequest[]
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([familyId])
+  @@index([lifeStatus])
+}
+
+//////////////////////
+// POPULATION EVENTS
+//////////////////////
+
+model PopulationEvent {
+  id         String     @id @default(uuid())
+  eventType  EventType
+  description String?
+  eventDate  DateTime
+
+  residentId String
+  resident   Resident   @relation(fields: [residentId], references: [id])
+
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+
+  createdAt  DateTime   @default(now())
+
+  @@index([residentId])
+  @@index([eventType])
+}
+
+//////////////////////
+// LETTER TYPES
+//////////////////////
+
+model LetterType {
+  id              String          @id @default(uuid())
+  name            String
+  description     String?
+  templatePath    String?
+  requiresApproval Boolean        @default(true)
+  isActive        Boolean         @default(true)
+
+  letters         LetterRequest[]
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+//////////////////////
+// LETTER REQUESTS
+//////////////////////
+
+model LetterRequest {
+  id             String        @id @default(uuid())
+  status         LetterStatus  @default(pending)
+  formPayload    Json
+  rejectionReason String?
+  documentPath   String?
+  approvedAt     DateTime?
+
+  residentId     String
+  resident       Resident      @relation(fields: [residentId], references: [id])
+
+  letterTypeId   String
+  letterType     LetterType    @relation(fields: [letterTypeId], references: [id])
+
+  operatorId     String?
+  operator       User?         @relation("OperatorLetters", fields: [operatorId], references: [id])
+
+  kepalaDesaId   String?
+  kepalaDesa     User?         @relation("KepalaDesaLetters", fields: [kepalaDesaId], references: [id])
+
+  documents      Document[]
+  signature      DigitalSignature?
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([residentId])
+  @@index([status])
+}
+
+//////////////////////
+// DOCUMENTS
+//////////////////////
+
+model Document {
+  id              String        @id @default(uuid())
+  filePath        String
+  fileType        String
+
+  letterRequestId String
+  letterRequest   LetterRequest @relation(fields: [letterRequestId], references: [id])
+
+  uploadedById    String
+  uploadedBy      User          @relation(fields: [uploadedById], references: [id])
+
+  createdAt       DateTime      @default(now())
+
+  @@index([letterRequestId])
+}
+
+//////////////////////
+// DIGITAL SIGNATURE
+//////////////////////
+
+model DigitalSignature {
+  id               String        @id @default(uuid())
+  signatureImagePath String
+  documentHash     String
+  qrCodePath       String
+
+  letterRequestId  String        @unique
+  letterRequest    LetterRequest @relation(fields: [letterRequestId], references: [id])
+
+  createdAt        DateTime      @default(now())
+}
+
+//////////////////////
+// AUDIT LOG
+//////////////////////
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  action     String
+  tableName  String
+  recordId   String
+  ipAddress  String?
+
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([tableName])
+}
+
